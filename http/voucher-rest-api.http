@@ -1,0 +1,90 @@
+### Voucher importFile
+POST http://{{host}}:{{port}}/v1/voucher/file/{{type}}?yearMonth={{yearMonth}}&userId={{userId}}
+Content-Type: multipart/form-data;boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="import-gw.csv"
+
+< ../src/test/resources/import/import-gw.csv
+--WebAppBoundary--
+
+### importJson
+POST http://{{host}}:{{port}}/v1/voucher?userId=1159
+Content-Type: application/json
+
+[
+  {
+    "invoiceNumber": "YZ00000001",
+    "commonNumber": "",
+    "typeCode": 21,
+    "invoiceStatus": "1",
+    "invoiceDate": "2020/3/10",
+    "buyer": 24549210,
+    "buyerName": "關網資訊股份有限公司",
+    "seller": 24549210,
+    "sellerName": "關網TEST",
+    "salesAmount": 100,
+    "taxAmount": 6,
+    "totalAmount": 106,
+    "taxType": "應稅",
+    "freeTaxSalesAmount": 0,
+    "zeroTaxSalesAmount": 0,
+    "deductionCode": 1,
+    "consolidationMark": "",
+    "consolidationQuantity": "",
+    "customsClearanceMark": "",
+    "currency": "TWD",
+    "zeroTaxMark": null,
+    "outputDate": "",
+    "businessUnit": "",
+    "relateNumber": "",
+    "yearMonth": 202004,
+    "source": "Pchome-Attach",
+    "uid": 50120
+  }
+]
+
+### importXml
+POST http://{{host}}:{{port}}/v1/voucher?userId=1159
+Content-Type: application/xml; charset=UTF-8
+
+<?xml version="1.0" encoding="UTF-8"?>
+<InvoiceExternalList>
+    <InvoiceExternal>
+        <businessUnit/>
+        <buyer>24549210</buyer>
+        <buyerName>關網資訊股份有限公司</buyerName>
+        <commonNumber/>
+        <consolidationMark/>
+        <currency>TWD</currency>
+        <customsClearanceMark/>
+        <deductionCode>1</deductionCode>
+        <freeTaxSalesAmount>0</freeTaxSalesAmount>
+        <invoiceDate>2020/3/10</invoiceDate>
+        <invoiceNumber>YZ00000000</invoiceNumber>
+        <invoiceStatus>開立已確認</invoiceStatus>
+        <outputDate/>
+        <relateNumber/>
+        <salesAmount>100</salesAmount>
+        <seller>42842476</seller>
+        <sellerName>關網TEST</sellerName>
+        <source>Pchome-Attach</source>
+        <taxAmount>6</taxAmount>
+        <taxType>應稅</taxType>
+        <totalAmount>106</totalAmount>
+        <typeCode>21</typeCode>
+        <uid>50120</uid>
+        <yearMonth>202002</yearMonth>
+        <zeroTaxMark/>
+        <zeroTaxSalesAmount>0</zeroTaxSalesAmount>
+    </InvoiceExternal>
+</InvoiceExternalList>
+
+### delete voucher by id
+DELETE http://localhost:7767/v1/voucher?userId=1159&ids=17
+
+### download voucher csv
+GET http://localhost:7767/v1/voucher/csv?yearMonths=10904&businessNos=24549210
+
+### health
+GET http://{{host}}:{{port}}/actuator/health
