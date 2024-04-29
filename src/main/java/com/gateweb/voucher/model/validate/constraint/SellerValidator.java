@@ -20,7 +20,7 @@ public class SellerValidator implements ConstraintValidator<Seller, VoucherCore>
     final String seller = v.getSeller();
     final String typeCode = v.getTypeCode();
     final String consolidationMark = v.getConsolidationMark();
-    final String voucherNumber = v.getVoucherNumber();
+    final String voucherNumber = v.getInvoiceNumber();
 
     final boolean isInput = isInput(typeCode);
     final boolean isConsolidation = chekckIsConsolidation(consolidationMark);

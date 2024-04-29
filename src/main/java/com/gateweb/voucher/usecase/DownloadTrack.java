@@ -11,7 +11,7 @@ public class DownloadTrack {
     this.trackService = trackService;
   }
 
-  public String execute(String year) {
+  public String run(String year) {
     return trackService.genTrackCsv(year);
   }
 }

@@ -42,12 +42,12 @@ public class V1TrackController {
               required = false,
               defaultValue = MediaType.APPLICATION_JSON_VALUE)
           String accept) {
-    log.info("Request : {}/{}", request.getRequestURI(), request.getQueryString());
+    log.info("Request : {}?{}", request.getRequestURI(), request.getQueryString());
     ResponseEntity response;
     try {
       if (!Objects.requireNonNull(file.getOriginalFilename()).toLowerCase().endsWith(".csv"))
         throw new Exception("只支援 csv 副檔名，請確認檔案格式");
-      final List<ErrorInfo> errors = importTrack.execute(file.getResource());
+      final List<ErrorInfo> errors = importTrack.run(file.getResource());
       if (errors.isEmpty()) {
         response = ResponseEntity.ok("ok");
         log.info("Response ok : {}", response);
@@ -65,15 +65,15 @@ public class V1TrackController {
   @GetMapping(value = {"/v1/track", "/v1/track/{year}"})
   public ResponseEntity<Resource> downloadTrackCsv(
       HttpServletRequest request, @PathVariable(value = "year", required = false) String year) {
-    log.info("Request : {}/{}", request.getRequestURI(), request.getQueryString());
-    final String trackCsv = downloadTrack.execute(year);
+    log.info("Request : {}?{}", request.getRequestURI(), request.getQueryString());
+    final String trackCsv = downloadTrack.run(year);
     final String filename = "track_" + StringUtils.defaultIfBlank(year, "all") + ".csv";
     return ResponseGenerator.downloadString(filename, "application/csv", trackCsv);
   }
 
   @GetMapping(value = "/v1/track/example")
   public ResponseEntity<Resource> downloadTrackImportSample(HttpServletRequest request) {
-    log.info("Request : {}/{}", request.getRequestURI(), request.getQueryString());
+    log.info("Request : {}?{}", request.getRequestURI(), request.getQueryString());
     final String resourcePath = "example/import_track.csv";
     final String filename = "import_track_example.csv";
     return ResponseGenerator.downloadResourcesFile(filename, "application/csv", resourcePath);

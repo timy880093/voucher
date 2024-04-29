@@ -1,7 +1,6 @@
 package com.gateweb.voucher.endpoint.rest.v1.request;
 
 import static com.gateweb.voucher.utils.voucher.VoucherRequestParser.*;
-import static com.gateweb.voucher.utils.voucher.VoucherRequestParser.parseOutputNumber;
 
 import com.gateweb.voucher.model.VoucherCore;
 import com.gateweb.voucher.utils.DateTimeConverter;
@@ -42,8 +41,8 @@ public class VoucherDefaultRequest extends VoucherRequest {
 
   public VoucherCore toDomain() {
     return VoucherCore.builder()
-        .voucherNumber(parseVoucherNumber(invoiceNumber, commonNumber, typeCode, taxType))
-        .exportNumber(parseOutputNumber(commonNumber, typeCode, taxType))
+        .invoiceNumber(invoiceNumber)
+        .commonNumber(commonNumber)
         .typeCode(typeCode)
         .status(parseStatus())
         .voucherDate(invoiceDate)
@@ -64,7 +63,7 @@ public class VoucherDefaultRequest extends VoucherRequest {
         .customsClearanceMark(customsClearanceMark)
         .currency(currency)
         .zeroTaxMark(zeroTaxMark)
-        .exportDate(outputDate)
+        .outputDate(outputDate)
         // 可能 yyyyMM
         .filingYearMonth(parseFilingYearMonth(yearMonth))
         .voucherYearMonth(DateTimeConverter.toEvenYearMonth(invoiceDate))
@@ -81,15 +80,15 @@ public class VoucherDefaultRequest extends VoucherRequest {
   public String parseOwner() {
     return VoucherRequestParser.parseOwner(typeCode, buyer, seller);
   }
-  
-  String parseStatus(){
+
+  String parseStatus() {
     // FIXME api 規格對外 1-開立、2-作廢、3-註銷，這段很難更改
-    switch (invoiceStatus){
+    switch (invoiceStatus) {
       case "1":
         return "2";
-              case "2":
+      case "2":
         return "3";
-              case "3":
+      case "3":
         return "4";
       default:
         return invoiceStatus;

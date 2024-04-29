@@ -4,18 +4,18 @@ import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import com.gateweb.voucher.model.validate.constraint.ExportDateValidator;
+import com.gateweb.voucher.model.validate.constraint.OutputDateValidator;
 import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
 
-@Constraint(validatedBy = ExportDateValidator.class) // 具體的實現
+@Constraint(validatedBy = OutputDateValidator.class) // 具體的實現
 @Target({TYPE, ANNOTATION_TYPE})
 @Retention(RUNTIME)
 @Documented
-public @interface ExportDate {
+public @interface OutputDate {
   String message() default "{}"; // 提示信息,可以寫死,可以填寫國際化的key
 
   //    String outputDate();
@@ -31,6 +31,6 @@ public @interface ExportDate {
   @Retention(RUNTIME)
   @Documented
   @interface List {
-    ExportDate[] value();
+    OutputDate[] value();
   }
 }

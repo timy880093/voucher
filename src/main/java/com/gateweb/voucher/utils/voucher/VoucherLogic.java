@@ -339,21 +339,6 @@ public class VoucherLogic {
     return taxType;
   }
 
-  public static String parseTaxType(String taxType) {
-    if (StringUtils.equals(taxType, "1") || StringUtils.contains(taxType, "應")) {
-      return "1";
-    } else if (StringUtils.equals(taxType, "2") || StringUtils.contains(taxType, "零")) {
-      return "2";
-    } else if (StringUtils.equals(taxType, "3") || StringUtils.contains(taxType, "免")) {
-      return "3";
-    } else if (StringUtils.startsWith(taxType, "1-") || StringUtils.contains(taxType, "特")) {
-      return "4";
-    } else if (StringUtils.equals(taxType, "9") || StringUtils.contains(taxType, "混")) {
-      return "9";
-    }
-    return "";
-  }
-
   public static int parseStatus(String value) {
     if (isIssued(value)) return 2;
     else if (isCancel(value)) return 3;
@@ -361,14 +346,14 @@ public class VoucherLogic {
     else return -1;
   }
 
-  public static Integer parseDeductionCode(String deductionCode) {
-    if (StringUtils.equalsAny(deductionCode, "1", "可扣抵之進貨及費用")) return 1;
-    else if (StringUtils.equalsAny(deductionCode, "2", "可扣抵之固定資產")) return 2;
-    else if (StringUtils.equalsAny(deductionCode, "3", "不可扣抵之進貨及費用")) return 3;
-    else if (StringUtils.equalsAny(deductionCode, "4", "不可扣抵之固定資產")) return 4;
+  public static String parseDeductionCode(String deductionCode) {
+    if (StringUtils.equalsAny(deductionCode, "1", "可扣抵之進貨及費用")) return "1";
+    else if (StringUtils.equalsAny(deductionCode, "2", "可扣抵之固定資產")) return "2";
+    else if (StringUtils.equalsAny(deductionCode, "3", "不可扣抵之進貨及費用")) return "3";
+    else if (StringUtils.equalsAny(deductionCode, "4", "不可扣抵之固定資產")) return "4";
     else {
-      if (StringUtils.startsWith(deductionCode, "可扣抵")) return 1;
-      else if (StringUtils.startsWith(deductionCode, "不可扣抵")) return 3;
+      if (StringUtils.startsWith(deductionCode, "可扣抵")) return "1";
+      else if (StringUtils.startsWith(deductionCode, "不可扣抵")) return "3";
       else return null;
     }
   }
@@ -422,19 +407,19 @@ public class VoucherLogic {
 
   /* ----- Converter ----- */
 
-  public static int parseTaxTypeInt(String taxType) {
+  public static String parseTaxType(String taxType) {
     if (isSpecialTax(taxType) || isTaxable(taxType)) {
-      return 1;
+      return "1";
     } else if (checkIsZeroTax(taxType)) {
-      return 2;
+      return "2";
     } else if (checkIsFreeTax(taxType)) {
-      return 3;
+      return "3";
     } else if (isSpecialTax(taxType)) {
-      return 4;
+      return "4";
     } else if (isMixedTax(taxType)) {
-      return 9;
+      return "9";
     }
-    return -1;
+    return "-1";
   }
 
   public static BigDecimal parseCancelAmount(String status, String amount) {

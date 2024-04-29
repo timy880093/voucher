@@ -1,8 +1,7 @@
 package com.gateweb.voucher.usecase;
 
-import com.gateweb.voucher.model.entity.VoucherEntity;
+import com.gateweb.voucher.model.entity.InvoiceExternalEntity;
 import com.gateweb.voucher.service.VoucherService;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -19,13 +18,14 @@ public class DownloadVoucher {
     this.voucherService = voucherService;
   }
 
-  public String execute(String yearMonths, String businessNos) throws IOException {
+  public String run(String yearMonths, String businessNos) throws Exception {
     // TODO
     final Set<String> yearMonthSet =
             Arrays.stream(StringUtils.split(yearMonths, ",")).collect(Collectors.toSet());
     final Set<String> businessNoSet =
         Arrays.stream(StringUtils.split(businessNos, ",")).collect(Collectors.toSet());
-    final List<VoucherEntity> voucherEntities = voucherService.findDataBySeek(yearMonthSet, businessNoSet);
+    final List<InvoiceExternalEntity> voucherEntities = voucherService.findDataBySeek(yearMonthSet, businessNoSet);
+    if(voucherEntities.isEmpty()) throw new Exception("查無資料");
     return voucherService.writeCsvString(voucherEntities);
   }
   

@@ -92,8 +92,8 @@ public class VoucherGwRequest extends VoucherRequest {
   @Override
   public VoucherCore toDomain() {
     return VoucherCore.builder()
-        .voucherNumber(parseVoucherNumber(invoiceNumber, commonNumber, typeCode, taxType))
-        .exportNumber(parseOutputNumber(commonNumber, typeCode, taxType))
+        .invoiceNumber(invoiceNumber)
+        .commonNumber(commonNumber)
         .typeCode(typeCode)
         .status(invoiceStatus)
         .voucherDate(invoiceDate)
@@ -114,7 +114,7 @@ public class VoucherGwRequest extends VoucherRequest {
         .customsClearanceMark(customsClearanceMark)
         .currency(currency)
         .zeroTaxMark(zeroTaxMark)
-        .exportDate(outputDate)
+        .outputDate(outputDate)
         .voucherYearMonth(DateTimeConverter.toEvenYearMonth(invoiceDate))
         //                .uid(uid)
         //        .remark1(businessUnit)

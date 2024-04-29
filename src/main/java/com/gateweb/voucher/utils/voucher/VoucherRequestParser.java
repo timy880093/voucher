@@ -18,16 +18,6 @@ public class VoucherRequestParser {
         : yearMonth;
   }
 
-  public static String parseVoucherNumber(
-      String invoiceNumber, String commonNumber, String typeCode, String taxType) {
-    if (VoucherLogic.isOutputExport(typeCode, taxType)) return invoiceNumber;
-    else return StringUtils.isBlank(invoiceNumber) ? commonNumber : invoiceNumber;
-  }
-
-  public static String parseOutputNumber(String commonNumber, String typeCode, String taxType) {
-    return VoucherLogic.isOutputExport(typeCode, taxType) ? commonNumber : null;
-  }
-
   public static String parseBuyer(String buyer) {
     return StringUtils.isBlank(buyer) ? "0000000000" : buyer;
   }
@@ -37,27 +27,16 @@ public class VoucherRequestParser {
   }
 
   public static String parseTaxRate(String taxType) {
-    switch (taxType) {
-      case "1":
-      case "9":
-        return "0.05";
-      case "2":
-      case "3":
-        return "0";
-      default:
-        /* parse 特種稅，ex:
-        1-25  => 0.25
-        應-15 => 0.15
-         */
-        if (StringUtils.contains(taxType, "-") && StringUtils.startsWithAny(taxType, "1", "應")) {
-          final String rateString = StringUtils.split(taxType, "")[1];
-          if (NumberUtils.isParsable(rateString))
-            return new BigDecimal(rateString)
-                .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP)
-                .toPlainString();
-        }
-        return "0";
-    }
+    if (VoucherLogic.isTaxable(taxType) || VoucherLogic.isMixedTax(taxType)) {
+      return "0.05";
+    } else if (VoucherLogic.isSpecialTax(taxType)) {
+      final String rateString = StringUtils.split(taxType, "")[1];
+      return NumberUtils.isParsable(rateString)
+          ? new BigDecimal(rateString)
+              .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP)
+              .toPlainString()
+          : "0";
+    } else return "0";
   }
 
   public static String parseDeductionCode(String deductionCode, String typeCode) {

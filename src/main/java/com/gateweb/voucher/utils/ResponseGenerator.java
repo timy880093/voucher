@@ -96,7 +96,8 @@ public class ResponseGenerator {
   public static ResponseEntity<Resource> download(
       String filename, String mediaType, Resource resource) {
     return ResponseEntity.ok()
-        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + filename)
+        .header(
+            HttpHeaders.CONTENT_DISPOSITION, String.format("attachment; filename=\"%s\"", filename))
         .contentType(MediaType.parseMediaType(mediaType))
         .body(resource);
   }

@@ -23,7 +23,7 @@ public class TaxAmountValidator implements ConstraintValidator<TaxAmount, Vouche
     final String taxType = v.getTaxType();
     final String typeCode = v.getTypeCode();
     final String buyer = v.getBuyer();
-    final String voucherNumber = v.getVoucherNumber();
+    final String voucherNumber = v.getInvoiceNumber();
     final String consolidationMark = v.getConsolidationMark();
 
     //    final boolean ignoreCheckTax = VoucherLogic.ignoreCheckTax(v.getCheckTax());

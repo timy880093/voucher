@@ -36,7 +36,7 @@ public class InvoiceDateValidator implements ConstraintValidator<InvoiceDate, Vo
       ValidatorUtils.addError(
           context,
           Pair.of(FILING_YEAR_MONTH, filingYearMonth),
-          Pair.of(VOUCHER_DATE, v.getVoucherDate()));
+          Pair.of(INVOICE_DATE, v.getVoucherDate()));
     }
     return isValid;
   }

@@ -37,7 +37,7 @@ public class VoucherMofRequest extends VoucherRequest {
   @Override
   public VoucherCore toDomain() {
     return VoucherCore.builder()
-        .voucherNumber(invoiceNumber)
+        .invoiceNumber(invoiceNumber)
         .typeCode(typeCode)
         .status(invoiceStatus)
         .voucherDate(invoiceDate)

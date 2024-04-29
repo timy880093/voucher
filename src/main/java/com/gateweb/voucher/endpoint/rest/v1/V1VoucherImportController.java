@@ -1,10 +1,7 @@
 package com.gateweb.voucher.endpoint.rest.v1;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.gateweb.voucher.endpoint.rest.v1.request.FileTypes;
-import com.gateweb.voucher.endpoint.rest.v1.request.VoucherDefaultRequest;
-import com.gateweb.voucher.endpoint.rest.v1.request.VoucherExtra;
-import com.gateweb.voucher.endpoint.rest.v1.request.VoucherRequest;
+import com.gateweb.voucher.endpoint.rest.v1.request.*;
 import com.gateweb.voucher.endpoint.rest.v1.response.VoucherResponse;
 import com.gateweb.voucher.model.dto.ErrorInfo;
 import com.gateweb.voucher.usecase.ImportVoucher;
@@ -12,7 +9,6 @@ import com.gateweb.voucher.utils.ResponseGenerator;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -110,10 +106,10 @@ public class V1VoucherImportController {
       List<V> voucherRequests,
       VoucherExtra voucherExtra,
       boolean validate) {
-    log.info("Request : {}/{}", request.getRequestURI(), request.getQueryString());
+    log.info("Request : {}?{}", request.getRequestURI(), request.getQueryString());
     ResponseEntity<String> response;
     try {
-      final List<ErrorInfo> errors = importVoucher.execute(voucherRequests, voucherExtra, validate);
+      final List<ErrorInfo> errors = importVoucher.run(voucherRequests, voucherExtra, validate);
       if (errors.isEmpty()) {
         response = ResponseEntity.ok("ok");
         log.info("Response ok : {}", response);
@@ -122,7 +118,7 @@ public class V1VoucherImportController {
         log.warn("Response failed : {}", response);
       }
     } catch (Exception e) {
-      response = ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+      response = ResponseEntity.badRequest().body(e.getMessage());
       log.error("Response error : {}", response);
     }
     return response;

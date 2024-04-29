@@ -1,5 +1,5 @@
 ### Import track
-POST http://localhost:7767/v1/track
+POST http://localhost:7768/v1/track
 Content-Type: multipart/form-data;boundary=WebAppBoundary
 
 --WebAppBoundary
@@ -9,10 +9,10 @@ Content-Disposition: form-data; name="file"; filename="import_track.csv"
 --WebAppBoundary--
 
 ### Get track csv
-GET http://localhost:7767/v1/track
+GET http://localhost:7768/v1/track
 
 ### Get track csv by year
-GET http://localhost:7767/v1/track/{{year}}
+GET http://localhost:7768/v1/track/{{year}}
 
 ### Get track import csv example
-GET http://localhost:7767/v1/track/example
+GET http://localhost:7768/v1/track/example

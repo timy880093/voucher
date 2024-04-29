@@ -13,7 +13,7 @@ import com.gateweb.voucher.endpoint.rest.v1.request.VoucherExtra;
 import com.gateweb.voucher.endpoint.rest.v1.request.VoucherRequest;
 import com.gateweb.voucher.model.VoucherCore;
 import com.gateweb.voucher.model.dto.ErrorInfo;
-import com.gateweb.voucher.model.entity.VoucherEntity;
+import com.gateweb.voucher.model.entity.InvoiceExternalEntity;
 import com.gateweb.voucher.repository.*;
 import com.gateweb.voucher.utils.voucher.VoucherLogic;
 import java.io.IOException;
@@ -33,8 +33,8 @@ public class VoucherServiceTest {
   private static VoucherService instance;
   private static CompanyDao companyDao;
   private static InvoiceMainDao invoiceMainDao;
-  private static VoucherRepository voucherRepository;
-  private static VoucherDataTableRepository voucherDataTableRepository;
+  private static InvoiceExternalRepository invoiceExternalRepository;
+  private static InvoiceExternalDataTableRepository invoiceExternalDataTableRepository;
   private static VoucherDao voucherDao;
   private static TrackCacheProvider trackCacheProvider;
   private static ObjectMapper objectMapper;
@@ -45,14 +45,14 @@ public class VoucherServiceTest {
     companyDao = mock(CompanyDao.class);
     invoiceMainDao = mock(InvoiceMainDao.class);
     trackCacheProvider = mock(TrackCacheProvider.class);
-    voucherRepository = mock(VoucherRepository.class);
-    voucherDataTableRepository = mock(VoucherDataTableRepository.class);
+    invoiceExternalRepository = mock(InvoiceExternalRepository.class);
+    invoiceExternalDataTableRepository = mock(InvoiceExternalDataTableRepository.class);
     voucherDao = mock(VoucherDao.class);
     final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
     instance =
         new VoucherService(
-            voucherRepository,
-            voucherDataTableRepository,
+            invoiceExternalRepository, 
+            invoiceExternalDataTableRepository,
             voucherDao,
             companyDao,
             invoiceMainDao,
@@ -150,13 +150,13 @@ public class VoucherServiceTest {
   void test_save() throws IOException {
     final VoucherExtra extra = mockExtra();
     final List<VoucherCore> voucherCores = mockVoucherCores(extra);
-    final List<VoucherEntity> voucherEntities =
-        voucherCores.stream().map(VoucherEntity::fromCore).collect(Collectors.toList());
+    final List<InvoiceExternalEntity> voucherEntities =
+        voucherCores.stream().map(InvoiceExternalEntity::fromCore).collect(Collectors.toList());
     Mockito.when(voucherDao.findByRepeatKey(any())).thenReturn(voucherEntities);
     Mockito.doNothing().when(voucherDao).deleteByIds(anyList());
-    Mockito.when(voucherRepository.saveAll(anyList())).thenReturn(voucherEntities);
+    Mockito.when(invoiceExternalRepository.saveAll(anyList())).thenReturn(voucherEntities);
 
-    final List<VoucherEntity> results = instance.save(voucherCores);
+    final List<InvoiceExternalEntity> results = instance.save(voucherCores);
     Assertions.assertThat(results).isNotEmpty();
   }
 
@@ -192,7 +192,7 @@ public class VoucherServiceTest {
                     StringUtils.joinWith(
                         "_",
                         v.getVoucherYearMonth(),
-                        v.getVoucherNumber().substring(0, 2),
+                        v.getInvoiceNumber().substring(0, 2),
                         v.getTypeCode()),
                 v -> true,
                 (older, newer) -> older, // 可選, 用於合併重複值

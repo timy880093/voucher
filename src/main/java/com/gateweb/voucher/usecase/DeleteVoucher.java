@@ -19,7 +19,7 @@ public class DeleteVoucher {
     this.voucherService = voucherService;
   }
 
-  public List<String> execute(String ids, int userId) {
+  public List<String> run(String ids, int userId) {
     final List<String> keys = deleteReturnKeys(ids);
     if (!keys.isEmpty()) logService.saveForDelete(keys, userId);
     return keys;

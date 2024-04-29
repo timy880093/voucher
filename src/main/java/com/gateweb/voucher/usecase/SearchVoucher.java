@@ -1,7 +1,8 @@
 package com.gateweb.voucher.usecase;
 
-import com.gateweb.voucher.model.entity.VoucherEntity;
+import com.gateweb.voucher.model.entity.InvoiceExternalEntity;
 import com.gateweb.voucher.service.VoucherService;
+import java.util.Optional;
 import java.util.Set;
 import javax.validation.Valid;
 import org.springframework.data.jpa.datatables.mapping.DataTablesInput;
@@ -17,8 +18,12 @@ public class SearchVoucher {
     this.voucherService = voucherService;
   }
 
-  public DataTablesOutput<VoucherEntity> execute(
-      @Valid DataTablesInput input, Set<String> yearMonths, Set<String> businessNos) {
+  public DataTablesOutput<InvoiceExternalEntity> run(
+      @Valid DataTablesInput input, Set<String> yearMonths, Set<String> businessNos) throws Exception {
     return voucherService.search(input, yearMonths, businessNos);
+  }
+  
+    public Optional<InvoiceExternalEntity> run(long id) throws Exception {
+    return voucherService.search(id);
   }
 }

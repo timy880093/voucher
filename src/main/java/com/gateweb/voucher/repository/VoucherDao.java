@@ -2,7 +2,7 @@ package com.gateweb.voucher.repository;
 
 import static com.gateweb.voucher.repository.VoucherDao.VoucherSql.*;
 
-import com.gateweb.voucher.model.entity.VoucherEntity;
+import com.gateweb.voucher.model.entity.InvoiceExternalEntity;
 import java.util.*;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -36,91 +36,38 @@ public class VoucherDao {
     log.debug("delete id: {}", ids);
   }
 
-  //  public List<Long> findInvoiceRepeatIds() {
-  //    final MapSqlParameterSource source = new MapSqlParameterSource().addValue("", "");
-  //    return jdbcOperations.queryForList(FIND_REPEAT, source, Long.class);
-  //  }
-
-  //  public List<Long> findByRepeatKey(List<VoucherEntity> vouchers) {
-  //    final Set<String> yearMonths =
-  //        vouchers.stream().map(VoucherEntity::getVoucherYearMonth).collect(Collectors.toSet());
-  //    final Set<String> keys =
-  // vouchers.stream().map(VoucherEntity::getKey).collect(Collectors.toSet());
-  //    final MapSqlParameterSource source =
-  //        new MapSqlParameterSource().addValue("yearMonth", yearMonths).addValue("key", keys);
-  //    return jdbcOperations.queryForList(FIND_BY_REPEAT_KEY, source, Long.class);
-  //  }
-
-  //  public void deleteByRepeatKey(List<VoucherEntity> voucherEntities) {
-  //    final Set<String> yearMonths =
-  //        voucherEntities.stream()
-  //            .map(VoucherEntity::getVoucherYearMonth)
-  //            .collect(Collectors.toSet());
-  //    final Set<String> keys =
-  //        voucherEntities.stream().map(VoucherEntity::getKey).collect(Collectors.toSet());
-  //    final MapSqlParameterSource source =
-  //        new MapSqlParameterSource().addValue("yearMonth", yearMonths).addValue("key", keys);
-  //    final List<Long> ids = jdbcOperations.queryForList(FIND_BY_REPEAT_KEY, source, Long.class);
-  //    deleteByIds(ids);
-  //    log.debug("deleteByRepeatKey id: {}", ids);
-  //  }
-
-  public List<VoucherEntity> findByRepeatKey(List<VoucherEntity> voucherEntities) {
+  public List<InvoiceExternalEntity> findByRepeatKey(List<InvoiceExternalEntity> voucherEntities) {
     final Set<String> yearMonths =
         voucherEntities.stream()
-            .map(VoucherEntity::getVoucherYearMonth)
+            .map(InvoiceExternalEntity::getOriginalYearMonth)
             .collect(Collectors.toSet());
     final Set<String> keys =
-        voucherEntities.stream().map(VoucherEntity::getKey).collect(Collectors.toSet());
+        voucherEntities.stream().map(InvoiceExternalEntity::getCheckRepeatKey).collect(Collectors.toSet());
     final MapSqlParameterSource source =
         new MapSqlParameterSource().addValue("yearMonth", yearMonths).addValue("keys", keys);
     return jdbcOperations.query(
         FIND_PAIR_BY_REPEAT_KEY,
         source,
         (rs, row) -> {
-          final VoucherEntity voucherEntity = new VoucherEntity();
-          voucherEntity.setId(rs.getLong("id"));
-          voucherEntity.setKey(rs.getString("key"));
-          voucherEntity.setLogIdHistory(rs.getString("log_id_history"));
-          voucherEntity.setCreatorId(rs.getInt("creator_id"));
-          voucherEntity.setCreateDate(rs.getTimestamp("create_date").toLocalDateTime());
-          return voucherEntity;
+          final InvoiceExternalEntity entity = new InvoiceExternalEntity();
+          entity.setExternalId(rs.getLong("external_id"));
+          entity.setCheckRepeatKey(rs.getString("check_repeat_key"));
+          entity.setLogIdHistory(rs.getString("log_id_history"));
+          entity.setCreatorId(rs.getInt("creator_id"));
+          entity.setCreateDate(rs.getTimestamp("create_date").toLocalDateTime());
+          return entity;
         });
   }
 
   static final class VoucherSql {
-    static final String FIND_REPEAT =
-        "delete id\n"
-            + "from voucher\n"
-            + "where ((invoice_number is not null and invoice_number = :invoiceNumber)\n"
-            + "    or (common_number is not null and common_number = :commonNumber))\n"
-            + "  and type_code in (:typeCodes)\n"
-            + "  and date between :start and :end";
-
-    static final String FIND_BY_REPEAT_KEY =
-        "select id\n"
-            + "from voucher\n"
-            + "where voucher_year_month in (:yearMonth)\n"
-            + "  and key in (:keys);";
 
     static final String FIND_PAIR_BY_REPEAT_KEY =
-        "select id, key, log_id_history, creator_id, create_date\n"
-            + "from voucher\n"
-            + "where voucher_year_month in (:yearMonth)\n"
-            + "  and key in (:keys);";
+        "select external_id, check_repeat_key, log_id_history, creator_id, create_date\n"
+            + "from invoice_external\n"
+            + "where original_year_month in (:yearMonth)\n"
+            + "  and check_repeat_key in (:keys);";
 
-    static final String FIND_BY_IDS = "select key from voucher where id in (:id)";
-    static final String DELETE_BY_IDS = "delete from voucher where id in (:id);";
-    static final String DELETE_REPEAT_KEY =
-        "delete\n"
-            + "from voucher\n"
-            + "where voucher_year_month = :yearMonth\n"
-            + "  and key = :key";
-
-    static final String DELETE_ALL_REPEAT_KEY =
-        "delete\n"
-            + "from voucher\n"
-            + "where voucher_year_month in (:yearMonth)\n"
-            + "  and key in (:key)";
+    static final String FIND_BY_IDS = "select check_repeat_key from invoice_external where external_id in (:id)";
+    static final String DELETE_BY_IDS = "delete from invoice_external where external_id in (:id);";
   }
 }

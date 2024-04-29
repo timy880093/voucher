@@ -1,6 +1,5 @@
 package com.gateweb.voucher.model;
 
-
 import com.gateweb.voucher.endpoint.rest.v1.request.VoucherExtra;
 import com.gateweb.voucher.model.validate.annotation.*;
 import com.gateweb.voucher.model.validate.type.*;
@@ -19,9 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@ExportNumber(
-    message = "Unexpected ExportNumber Validation",
-    groups = {Type31.class, Type32.class, Type35.class, Type36.class})
+@InvoiceAndCommonNum(groups = {TypeInput.class, TypeOutput.class})
 @InvoiceDate(
     message = "IE0502",
     groups = {TypeInput.class, TypeOutput.class})
@@ -94,8 +91,8 @@ import org.apache.commons.lang3.StringUtils;
 @ZeroTaxMark(
     message = "Unexpected ZeroTaxMark Validation",
     groups = {Type31.class, Type32.class, Type35.class, Type36.class})
-@ExportDate(
-    message = "Unexpected ExportDate Validation",
+@OutputDate(
+    message = "Unexpected OutputDate Validation",
     groups = {Type31.class, Type32.class, Type35.class, Type36.class})
 public class VoucherCore {
   private String key;
@@ -119,26 +116,27 @@ public class VoucherCore {
         Type35.class,
         Type33.class
       })
-  @Pattern(
+  @Size(
       message = "IE0102",
-      regexp = "^[A-Z0-9]([A-Z0-9]|[\\\\s])([A-Z2-9]|0|[\\\\s])([A-Z0-9]|[\\\\s]){11}$",
+      max = 0,
       groups = {Type28.class, Type29.class})
   @Pattern(
       message = "IE0103",
-      regexp = "^([A-Z]{2}[0-9]{8}|((?![A-Z]{2}[0-9]{0,8})\\w){0,10})$",
-      groups = {
-        Type22.class,
-        Type25.class,
-        Type27.class,
-        Type24.class,
-        Type34.class,
-        Type37.class,
-        Type38.class
-      })
+      regexp = "^([A-Z]{2}[0-9]{8}|)$",
+      groups = {Type22.class, Type25.class, Type27.class, Type24.class, Type37.class, Type38.class})
   @Pattern(message = "IE0106", regexp = "^((?![A-Z]{2}[0-9]{8})\\w){0,10}$", groups = Type36.class)
-  private String voucherNumber;
+  @Pattern(
+      message = "IE0109",
+      regexp = "^([A-Z]{2}[0-9]{8}|((?![A-Z]{2}[0-9]{0,8})\\w){0,10})$",
+      groups = Type34.class)
+  // 34 可能有 32 的發票號碼、36 的其他憑證號碼
+  @Size(
+      message = "IE0108",
+      max = 10,
+      groups = {TypeInput.class, TypeOutput.class})
+  private String invoiceNumber;
 
-  private String exportNumber;
+  private String commonNumber;
 
   private String typeCode;
 
@@ -291,12 +289,12 @@ public class VoucherCore {
       message = "IE2202",
       max = 0,
       groups = {TypeInput.class, Type33.class, Type34.class, Type37.class, Type38.class})
-  private String exportDate;
+  private String outputDate;
 
   private int creatorId;
   private int modifierId;
   private long logId;
-//  private String logIdHistory;
+  //  private String logIdHistory;
   private String uid; // 彈性
 
   @Size(
@@ -323,10 +321,10 @@ public class VoucherCore {
   public VoucherCore combine(VoucherExtra extra) {
     setKey(genKey());
     // 若號碼為空，要隨機 gen 號碼，避免日後沒有 key 可供查詢
-    setVoucherNumber(
+    setInvoiceNumber(
         StringUtils.defaultIfBlank(
-            voucherNumber, "gw" + UUID.randomUUID().toString().substring(0, 8)));
-    setExportNumber(StringUtils.defaultIfBlank(exportNumber, ""));
+            invoiceNumber, "gw" + UUID.randomUUID().toString().substring(0, 8)));
+    setCommonNumber(StringUtils.defaultIfBlank(commonNumber, ""));
     setVoucherYearMonth(DateTimeConverter.toEvenYearMonth(voucherDate));
     setCurrency(StringUtils.defaultIfBlank(currency, "TWD"));
     setOwner(extra.getOwner());
@@ -341,14 +339,14 @@ public class VoucherCore {
   String genKey() {
     final String inputOrOutput = VoucherLogic.isInput(typeCode) ? "input" : "output";
     final String invoiceOrAllowance = VoucherLogic.isInvoice(typeCode) ? "invoice" : "allowance";
-    final String newUid = VoucherLogic.isInvoice(typeCode) ? "" : uid;
+    final String allowanceUid = VoucherLogic.isInvoice(typeCode) ? "" : uid;
     return String.join(
         "|",
         inputOrOutput,
         invoiceOrAllowance,
-        voucherYearMonth,
-        voucherNumber,
-        exportNumber == null ? "" : exportNumber,
-        newUid);
+        voucherYearMonth.substring(0, 3),
+        invoiceNumber,
+        commonNumber == null ? "" : commonNumber,
+        allowanceUid);
   }
 }

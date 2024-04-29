@@ -8,7 +8,7 @@ import com.gateweb.voucher.component.TrackCacheProvider;
 import com.gateweb.voucher.endpoint.rest.v1.request.*;
 import com.gateweb.voucher.model.VoucherCore;
 import com.gateweb.voucher.model.dto.ErrorInfo;
-import com.gateweb.voucher.model.entity.VoucherEntity;
+import com.gateweb.voucher.model.entity.InvoiceExternalEntity;
 import com.gateweb.voucher.model.validate.type.*;
 import com.gateweb.voucher.repository.*;
 import com.gateweb.voucher.utils.*;
@@ -33,9 +33,8 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Service
 public class VoucherService {
-
-  private final VoucherRepository voucherRepository;
-  private final VoucherDataTableRepository voucherDataTableRepository;
+  private final InvoiceExternalRepository invoiceExternalRepository;
+  private final InvoiceExternalDataTableRepository invoiceExternalDataTableRepository;
   private final VoucherDao voucherDao;
   private final CompanyDao companyDao;
   private final InvoiceMainDao invoiceMainDao;
@@ -43,15 +42,15 @@ public class VoucherService {
   private final Validator validator;
 
   public VoucherService(
-      VoucherRepository voucherRepository,
-      VoucherDataTableRepository voucherDataTableRepository,
+      InvoiceExternalRepository invoiceExternalRepository,
+      InvoiceExternalDataTableRepository invoiceExternalDataTableRepository,
       VoucherDao voucherDao,
       CompanyDao companyDao,
       InvoiceMainDao invoiceMainDao,
       TrackCacheProvider trackCacheProvider,
       Validator validator) {
-    this.voucherRepository = voucherRepository;
-    this.voucherDataTableRepository = voucherDataTableRepository;
+    this.invoiceExternalRepository = invoiceExternalRepository;
+    this.invoiceExternalDataTableRepository = invoiceExternalDataTableRepository;
     this.voucherDao = voucherDao;
     this.companyDao = companyDao;
     this.invoiceMainDao = invoiceMainDao;
@@ -60,12 +59,12 @@ public class VoucherService {
   }
 
   private static final String[] GW_DOWNLOAD_CSV_COLUMN = {
-    "voucherNumber",
-    "exportNumber",
+    "invoiceNumber",
+    "commonNumber",
     "filingYearMonth",
     "typeCode",
-    "status",
-    "voucherDate",
+    "invoiceStatus",
+    "invoiceDate",
     "buyer",
     "buyerName",
     "seller",
@@ -82,7 +81,7 @@ public class VoucherService {
     "customsClearanceMark",
     "currency",
     "zeroTaxMark",
-    "exportDate"
+    "outpuDate"
   };
 
   public List<ErrorInfo> validate(List<VoucherCore> voucherCores) {
@@ -176,25 +175,29 @@ public class VoucherService {
   }
 
   @Transactional(rollbackFor = Exception.class)
-  public List<VoucherEntity> save(List<VoucherCore> voucherCores) {
-    final List<VoucherEntity> voucherEntities =
-        voucherCores.stream().map(VoucherEntity::fromCore).collect(Collectors.toList());
-    final List<VoucherEntity> repeatList = voucherDao.findByRepeatKey(voucherEntities);
-    final List<VoucherEntity> newEntities = parseEntities(voucherEntities, repeatList);
+  public List<InvoiceExternalEntity> save(List<VoucherCore> voucherCores) {
+    final List<InvoiceExternalEntity> voucherEntities =
+        voucherCores.stream().map(InvoiceExternalEntity::fromCore).collect(Collectors.toList());
+    final List<InvoiceExternalEntity> repeatList = voucherDao.findByRepeatKey(voucherEntities);
+    final List<InvoiceExternalEntity> newEntities = parseEntities(voucherEntities, repeatList);
     voucherDao.deleteByIds(
-        repeatList.stream().map(VoucherEntity::getId).collect(Collectors.toList()));
-    return voucherRepository.saveAll(newEntities);
+        repeatList.stream().map(InvoiceExternalEntity::getExternalId).collect(Collectors.toList()));
+    return invoiceExternalRepository.saveAll(newEntities);
   }
 
-  private List<VoucherEntity> parseEntities(
-      List<VoucherEntity> voucherEntities, List<VoucherEntity> repeatList) {
-    final Map<String, VoucherEntity> repeatMap =
+  private List<InvoiceExternalEntity> parseEntities(
+      List<InvoiceExternalEntity> voucherEntities, List<InvoiceExternalEntity> repeatList) {
+    final Map<String, InvoiceExternalEntity> repeatMap =
         repeatList.stream()
             .collect(
-                Collectors.toMap(VoucherEntity::getKey, v -> v, (oldValue, newValue) -> newValue));
+                Collectors.toMap(
+                    InvoiceExternalEntity::getCheckRepeatKey,
+                    v -> v,
+                    (oldValue, newValue) -> newValue));
     voucherEntities.forEach(
         it -> {
-          final VoucherEntity history = repeatMap.getOrDefault(it.getKey(), null);
+          final InvoiceExternalEntity history =
+              repeatMap.getOrDefault(it.getCheckRepeatKey(), null);
           if (history == null) return;
           // LogIdHistory : (之前的,現在的)
           it.setLogIdHistory(history.getLogIdHistory() + "," + it.getLogIdHistory());
@@ -210,14 +213,14 @@ public class VoucherService {
             .filter(
                 v ->
                     VoucherLogic.isEguiInvoice(v.getTypeCode())
-                        && VoucherLogic.isValidInvoiceNumber(v.getVoucherNumber()))
+                        && VoucherLogic.isValidInvoiceNumber(v.getInvoiceNumber()))
             .collect(Collectors.toList());
     final Map<String, Set<String>> outputInvoiceMap =
         eguiVoucherCores.stream()
             .collect(
                 groupingBy(
                     v -> DateTimeConverter.toEvenYearMonth(v.getVoucherDate()),
-                    Collectors.mapping(VoucherCore::getVoucherNumber, toSet())));
+                    Collectors.mapping(VoucherCore::getInvoiceNumber, toSet())));
     return outputInvoiceMap.keySet().stream()
         .map(ym -> invoiceMainDao.findExistInvoiceNumbers(ym, outputInvoiceMap.get(ym)))
         .flatMap(Set::stream)
@@ -237,25 +240,25 @@ public class VoucherService {
 
   ErrorInfo checkTrack(VoucherCore v) {
     return !VoucherLogic.isTrackValid(
-            v.getVoucherNumber(),
+            v.getInvoiceNumber(),
             v.getVoucherYearMonth(),
             v.getTypeCode(),
             trackCacheProvider.getTrackMap())
         ? ErrorInfo.create(
             v.getKey(),
             "invoiceNumber track error : 字軌不符",
-            Pair.of(INVOICE_NUMBER, v.getVoucherNumber()),
-            Pair.of(VOUCHER_DATE, v.getVoucherDate()),
+            Pair.of(INVOICE_NUMBER, v.getInvoiceNumber()),
+            Pair.of(INVOICE_DATE, v.getVoucherDate()),
             Pair.of(TYPE_CODE, v.getTypeCode()))
         : null;
   }
 
   ErrorInfo checkInvoiceNumberUnique(VoucherCore v, Set<String> existNumbers) {
-    return !VoucherLogic.isInvoiceNumberUnique(existNumbers, v.getVoucherNumber(), v.getTypeCode())
+    return !VoucherLogic.isInvoiceNumberUnique(existNumbers, v.getInvoiceNumber(), v.getTypeCode())
         ? ErrorInfo.create(
             v.getKey(),
             "invoiceNumber error : 與 Egui 重複",
-            Pair.of(INVOICE_NUMBER, v.getVoucherNumber()))
+            Pair.of(INVOICE_NUMBER, v.getInvoiceNumber()))
         : null;
   }
 
@@ -311,13 +314,23 @@ public class VoucherService {
     return keys;
   }
 
-  public DataTablesOutput<VoucherEntity> search(
-      DataTablesInput input, Set<String> yearMonths, Set<String> businessNos) {
-    final Specification<VoucherEntity> conditionSpec = getConditionSpec(yearMonths, businessNos);
-    return voucherDataTableRepository.findAll(input, conditionSpec, conditionSpec);
+  public DataTablesOutput<InvoiceExternalEntity> search(
+      DataTablesInput input, Set<String> yearMonths, Set<String> businessNos) throws Exception {
+    try {
+      final Specification<InvoiceExternalEntity> conditionSpec =
+          getConditionSpec(yearMonths, businessNos);
+      return invoiceExternalDataTableRepository.findAll(input, null, conditionSpec);
+    } catch (Exception e) {
+      throw new Exception("search error: " + e.getMessage());
+    }
   }
 
-  Specification<VoucherEntity> getConditionSpec(Set<String> yearMonths, Set<String> businessNos) {
+  public Optional<InvoiceExternalEntity> search(long id) {
+    return invoiceExternalRepository.findById(id);
+  }
+
+  Specification<InvoiceExternalEntity> getConditionSpec(
+      Set<String> yearMonths, Set<String> businessNos) {
     return (root, query, criteriaBuilder) -> {
       final Predicate ownerIn = root.get("owner").in(businessNos);
       final Predicate yearMonthIn = root.get("yearMonth").in(yearMonths);
@@ -325,20 +338,20 @@ public class VoucherService {
     };
   }
 
-  public List<VoucherEntity> findDataBySeek(
+  public List<InvoiceExternalEntity> findDataBySeek(
       Collection<String> yearMonths, Collection<String> businessNos) {
-    List<VoucherEntity> entities = new LinkedList<>();
+    List<InvoiceExternalEntity> entities = new LinkedList<>();
     boolean dataExist = true;
     long id = 0L;
     do {
-      final List<VoucherEntity> seekData =
-          voucherRepository.findDataBySeek(id, yearMonths, businessNos, 100000);
+      final List<InvoiceExternalEntity> seekData =
+          invoiceExternalRepository.findDataBySeek(id, businessNos, yearMonths, 100000);
       if (seekData.isEmpty()) {
         dataExist = false;
       } else {
         entities.addAll(seekData);
         log.debug("process record : {}", entities.size());
-        id = seekData.get(seekData.size() - 1).getId();
+        id = seekData.get(seekData.size() - 1).getExternalId();
         log.debug("process last id : {}", id);
       }
     } while (dataExist);
@@ -346,12 +359,12 @@ public class VoucherService {
     return entities;
   }
 
-  public String writeCsvString(List<VoucherEntity> voucherEntities) throws IOException {
+  public String writeCsvString(List<InvoiceExternalEntity> voucherEntities) throws IOException {
     final List<String[]> arrayList =
         voucherEntities.stream()
             .map(
                 d -> {
-                  if (d.getStatus() == 3 || d.getStatus() == 4) {
+                  if (d.getInvoiceStatus() == 3 || d.getInvoiceStatus() == 4) {
                     d.setSalesAmount(BigDecimal.ZERO);
                     d.setZeroTaxSalesAmount(BigDecimal.ZERO);
                     d.setFreeTaxSalesAmount(BigDecimal.ZERO);
@@ -359,12 +372,12 @@ public class VoucherService {
                     d.setTotalAmount(BigDecimal.ZERO);
                   }
                   return new String[] {
-                    d.getVoucherNumber(),
-                    d.getExportNumber(),
-                    d.getFilingYearMonth(),
+                    d.getInvoiceNumber(),
+                    d.getCommonNumber(),
+                    d.getYearMonth(),
                     d.getTypeCode(),
-                    String.valueOf(d.getStatus()),
-                    d.getVoucherDate(),
+                    String.valueOf(d.getInvoiceStatus()),
+                    d.getInvoiceDate(),
                     d.getBuyer(),
                     d.getBuyerName(),
                     d.getSeller(),
@@ -381,7 +394,7 @@ public class VoucherService {
                     String.valueOf(d.getCustomsClearanceMark()),
                     d.getCurrency(),
                     String.valueOf(d.getZeroTaxMark()),
-                    d.getExportDate()
+                    d.getOutputDate()
                   };
                 })
             .collect(Collectors.toList());

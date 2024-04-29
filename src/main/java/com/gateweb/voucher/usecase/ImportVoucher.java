@@ -39,7 +39,7 @@ public class ImportVoucher {
     this.objectMapper = objectMapper;
   }
 
-  public <V extends VoucherRequest> List<ErrorInfo> execute(
+  public <V extends VoucherRequest> List<ErrorInfo> run(
       List<V> requestData, VoucherExtra extra, boolean validate) throws VoucherException {
     extra.setOwner(requestData.get(0).parseOwner());
     final VoucherLogEntity voucherLogEntity = logService.saveProcessing(requestData, extra);

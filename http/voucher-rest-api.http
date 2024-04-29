@@ -81,10 +81,16 @@ Content-Type: application/xml; charset=UTF-8
 </InvoiceExternalList>
 
 ### delete voucher by id
-DELETE http://localhost:7767/v1/voucher?userId=1159&ids=17
+DELETE http://localhost:7768/v1/voucher?userId=1159&ids=17
 
 ### download voucher csv
-GET http://localhost:7767/v1/voucher/csv?yearMonths=10904&businessNos=24549210
+POST http://localhost:7768/v1/voucher/csv
+Content-Type: application/json
+
+{
+  "yearMonths": "10904",
+  "businessNos": "24549210"
+}
 
 ### health
 GET http://{{host}}:{{port}}/actuator/health
